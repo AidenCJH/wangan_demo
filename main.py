@@ -115,7 +115,7 @@ async def chat(request: Request):
 
     source_documents = result["source_documents"]
 
-
+    # 加入参考资料
     references = "\n".join(
         [
             f"{i + 1}、《{os.path.basename(doc.metadata.get('source', '未知文档'))}》\n "
