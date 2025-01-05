@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-
+import re
 print('start loading embedding......', end='')
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-mpnet-base-v2",
@@ -115,15 +115,18 @@ async def chat(request: Request):
 
     source_documents = result["source_documents"]
 
-    # 构建参考资料字符串
+
     references = "\n".join(
-        [f"{i + 1}、({os.path.basename(doc.metadata.get('source', '未知文档'))}) {doc.page_content[:100]}..."
-         for i, doc in enumerate(source_documents)]
+        [
+            f"{i + 1}、《{os.path.basename(doc.metadata.get('source', '未知文档'))}》\n "
+            + re.sub(r"\s+", " ", doc.page_content)[:200] + "..."
+            for i, doc in enumerate(source_documents)
+        ]
     )
 
     # 返回响应内容，包含回答和参考资料
     response_message = {
-        "AI": f"{answer}\n\n参考资料:\n{references}"
+        "AI": f"{answer}\n\n--------------------\n参考资料:\n{references}"
     }
     if memory.chat_memory.messages and isinstance(memory.chat_memory.messages[-1], AIMessage):
         memory.chat_memory.messages[-1] = AIMessage(content=response_message["AI"])
